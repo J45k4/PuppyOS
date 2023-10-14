@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "module": "ES2022",
+        "target": "ES2022",
+        "lib": ["ES2023", "DOM"],
+        "outDir": "../static/js"
+    },
+    "include": ["src/**/*"]
+}

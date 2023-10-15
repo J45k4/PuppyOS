@@ -65,6 +65,7 @@ export class DropDown {
     constructor(args) {
         this.root = document.createElement("div");
         this.root.innerHTML = args.title;
+        this.root.style.display = "inline-block";
         // this.root.style.maxHeight = "20px"
         // this.root.style.overflowY = "hidden"
         this.root.style.cursor = "pointer";
@@ -81,7 +82,6 @@ export class DropDown {
         this.itemsDiv.style.display = "none";
         this.itemsDiv.style.backgroundColor = "white";
         this.itemsDiv.style.border = "1px solid grey";
-        this.itemsDiv.style.maxWidth = "300px";
         for (const item of args.items) {
             const itemDiv = document.createElement("div");
             itemDiv.style.border = "5px";

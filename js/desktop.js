@@ -32,8 +32,22 @@ export class Desktop {
 }
 export class Toolbar {
     root;
+    left;
+    right;
     constructor() {
         this.root = document.createElement("div");
+        this.root.style.display = "flex";
+        this.root.style.flexDirection = "row";
+        this.left = document.createElement("div");
+        this.left.style.flexGrow = "1";
+        this.root.appendChild(this.left);
+        this.right = document.createElement("div");
+        const logo = document.createElement("img");
+        logo.src = "/PuppyOS/puppyos.png";
+        logo.style.width = "40px";
+        logo.style.margin = "5px";
+        this.right.appendChild(logo);
+        this.root.appendChild(this.right);
         this.root.style.width = "100%";
         this.root.style.height = "50px";
         this.root.style.backgroundColor = "#ededed";
@@ -42,7 +56,7 @@ export class Toolbar {
     addToolbarButton(btn) {
         btn.root.style.margin = "5px";
         btn.root.style.padding = "5px";
-        this.root.appendChild(btn.root);
+        this.left.appendChild(btn.root);
     }
 }
 export class DropDown {

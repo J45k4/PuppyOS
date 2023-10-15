@@ -6,6 +6,7 @@ import { Desktop, DesktopIcon, DropDown, ToolbarButton, Win } from "./desktop.js
 import { EditorApp } from "./editor.js"
 import { Email } from "./email.js"
 import { ImageViewer } from "./image_viewer.js"
+import { SheetApp } from "./sheet.js"
 import { TerminalApp } from "./terminal.js"
 import { StartApp } from "./types"
 
@@ -75,6 +76,13 @@ window.onload = () => {
                 onClick: () => {
                     const app = new Email()
                     desktop.root.appendChild(app.root)
+                }
+            },
+            {
+                title: "Sheet",
+                onClick: () => {
+                    const sheep = new SheetApp()
+                    desktop.root.appendChild(sheep.root)
                 }
             }
         ]

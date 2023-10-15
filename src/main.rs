@@ -66,7 +66,7 @@ pub async fn handle_request(mut req: Request<Body>) -> Result<Response<Body>, an
         return Ok(response);
     }
 
-    let path = req.uri().path();
+    let path = req.uri().path().replace("/PuppyOS", "");
 
     let static_path = format!("./static{}", path);
     log::debug!("static_path: {:?}", static_path);

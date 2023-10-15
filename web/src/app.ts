@@ -89,7 +89,9 @@ window.onload = () => {
             {
                 title: "Timer",
                 onClick: () => {
-                    const app = new Timer()
+                    const app = new Timer({
+                        time: 20
+                    })
                     desktop.root.appendChild(app.root)
                 }
             }

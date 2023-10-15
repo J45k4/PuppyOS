@@ -25,7 +25,7 @@ class NumberPad {
         middle.style.flexGrow = "1"
         this.root.appendChild(middle)
 
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 3; i++) {
             const row = document.createElement("div")
             row.style.display = "flex"
             row.style.flexGrow = "1"
@@ -130,7 +130,9 @@ class NumberPad {
 export class CalculatorApp extends Win {
     public constructor() {
         super({
-            title: "Calculator"
+            title: "Calculator",
+            minHeight: 200,
+            minWidth: 200,
         })
 
         const numberPad = new NumberPad({

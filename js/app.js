@@ -8,6 +8,7 @@ import { Email } from "./email.js";
 import { ImageViewer } from "./image_viewer.js";
 import { SheetApp } from "./sheet.js";
 import { TerminalApp } from "./terminal.js";
+import { Timer } from "./timer.js";
 window.onload = () => {
     const body = document.querySelector("body");
     console.log("onload");
@@ -78,6 +79,13 @@ window.onload = () => {
                 onClick: () => {
                     const sheep = new SheetApp();
                     desktop.root.appendChild(sheep.root);
+                }
+            },
+            {
+                title: "Timer",
+                onClick: () => {
+                    const app = new Timer();
+                    desktop.root.appendChild(app.root);
                 }
             }
         ]

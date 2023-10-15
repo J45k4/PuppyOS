@@ -36,7 +36,7 @@ export class Toolbar {
         this.root = document.createElement("div");
         this.root.style.width = "100%";
         this.root.style.height = "50px";
-        this.root.style.backgroundColor = "white";
+        this.root.style.backgroundColor = "#ededed";
         this.root.style.display = "flex";
     }
     addToolbarButton(btn) {
@@ -66,6 +66,7 @@ export class DropDown {
         this.itemsDiv = document.createElement("div");
         this.itemsDiv.style.display = "none";
         this.itemsDiv.style.backgroundColor = "white";
+        this.itemsDiv.style.border = "1px solid grey";
         for (const item of args.items) {
             const itemDiv = document.createElement("div");
             itemDiv.style.border = "5px";

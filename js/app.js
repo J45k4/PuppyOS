@@ -1,7 +1,9 @@
 import { AccountantApp } from "./accountant.js";
 import { CalculatorApp } from "./calculator.js";
 import { Desktop, DesktopIcon, DropDown } from "./desktop.js";
+import { EditorApp } from "./editor.js";
 import { ImageViewer } from "./image_viewer.js";
+import { TerminalApp } from "./terminal.js";
 window.onload = () => {
     const body = document.querySelector("body");
     console.log("onload");
@@ -29,6 +31,20 @@ window.onload = () => {
                 title: "Calculator",
                 onClick: () => {
                     const app = new CalculatorApp();
+                    desktop.root.appendChild(app.root);
+                }
+            },
+            {
+                title: "Terminal",
+                onClick: () => {
+                    const app = new TerminalApp();
+                    desktop.root.appendChild(app.root);
+                }
+            },
+            {
+                title: "Editor",
+                onClick: () => {
+                    const app = new EditorApp();
                     desktop.root.appendChild(app.root);
                 }
             }

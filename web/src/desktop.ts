@@ -104,6 +104,7 @@ export class DropDown {
         this.itemsDiv.style.display = "none"
         this.itemsDiv.style.backgroundColor = "white"
         this.itemsDiv.style.border = "1px solid grey"
+        this.itemsDiv.style.maxWidth = "300px"
 
         for (const item of args.items) {
             const itemDiv = document.createElement("div")
@@ -160,9 +161,10 @@ export class Win {
         const closeBtn = document.createElement("button")
         closeBtn.innerHTML = "X"
         closeBtn.style.margin = "5px"
-        closeBtn.onclick = (e) => {
-            e.preventDefault()
+        closeBtn.onmousedown = (e) => {
             e.stopPropagation()
+        }
+        closeBtn.onclick = (e) => {
             this.root.remove()
         }
         toolbarControls.appendChild(closeBtn)

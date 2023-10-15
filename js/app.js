@@ -20,7 +20,7 @@ window.onload = () => {
                 title: "Image Viewer",
                 onClick: () => {
                     const app = new ImageViewer({
-                        src: "/puppy_pillow.png"
+                        src: "/PuppyOS/puppy_pillow.png"
                     });
                     desktop.root.appendChild(app.root);
                 }
@@ -36,7 +36,7 @@ window.onload = () => {
     });
     desktop.toolbar.addToolbarButton(applications);
     const icon = new DesktopIcon({
-        src: "/account_manager.jpeg",
+        src: "/PuppyOS/account_manager.jpeg",
         onClick: () => {
             const app = new AccountantApp();
             desktop.root.appendChild(app.root);
@@ -44,7 +44,7 @@ window.onload = () => {
     });
     desktop.root.appendChild(icon.root);
     const icon2 = new DesktopIcon({
-        src: "/puppy_pillow.png",
+        src: "/PuppyOS/puppy_pillow.png",
         onClick: () => {
             const app = new ImageViewer({
                 src: "/puppy_pillow.png"

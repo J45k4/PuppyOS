@@ -21,7 +21,7 @@ export class Desktop {
         this.root.appendChild(this.content);
         this.toolbar = new Toolbar();
         this.root.appendChild(this.toolbar.root);
-        this.root.style.backgroundImage = `url("/PuppyOSlogo.jpeg")`;
+        this.root.style.backgroundImage = `url("/PuppyOS/logo.jpeg")`;
     }
     addWind(win) {
         this.root.appendChild(win.root);

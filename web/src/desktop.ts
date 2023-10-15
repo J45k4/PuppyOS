@@ -119,6 +119,10 @@ export class Win {
 
     public constructor(args: {
         title?: string
+        minHeight?: number
+        minWidth?: number
+        maxHeight?: number
+        maxWidth?: number
     }) {
         this.title = args.title || "Window"
         this.root = document.createElement("div")
@@ -156,6 +160,10 @@ export class Win {
         this.content.style.border = "1px solid black"
         this.content.style.height = this.height + "px"
         this.content.style.width = this.width + "px"
+        this.content.style.minHeight = args.minHeight ? args.minHeight + "px" : undefined
+        this.content.style.minWidth = args.minWidth ? args.minWidth + "px" : undefined
+        this.content.style.maxHeight = args.maxHeight ? args.maxHeight + "px" : undefined
+        this.content.style.maxWidth = args.maxWidth ? args.maxWidth + "px" : undefined
         this.content.style.backgroundColor = "white"
 
         const rightResize = document.createElement("div")

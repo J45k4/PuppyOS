@@ -1,0 +1,41 @@
+
+.timerContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.timerContainer > * {
+    margin: 10px;
+}
+
+.currentTimerTime {
+    font-size: 40px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.newTime {
+    font-size: 20px;
+    padding: 10px;
+}
+
+.timerControls {
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeCtrl {
+    display: flex;
+    flex-direction: column;
+}
+
+.timer_cntr_button {
+    margin: 5px
+}
+

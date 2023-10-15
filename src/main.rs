@@ -86,7 +86,7 @@ pub async fn handle_request(mut req: Request<Body>) -> Result<Response<Body>, an
     match path.trim() {
         _ => {
             log::debug!("using index.html");
-            Ok(serve_static_file!("../web/index.html"))
+            Ok(serve_static_file!("../static/index.html"))
         }
     }
 }

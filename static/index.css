@@ -1,4 +1,14 @@
 
 body {
     margin: 0px;
+    overflow: hidden;
+}
+
+.dropDownItem {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.dropDownItem:hover {
+    background-color: #f1f1f1;
 }

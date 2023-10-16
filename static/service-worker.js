@@ -1,10 +1,8 @@
 const CACHE_NAME = "puppyos-cache-v1";
 const urlsToCache = [
     "/",
-    "/index.html",
-    "/style.css",
-    "/script.js",
-    // ... any other files, images, or assets specific to PuppyOS
+    "/PuppyOS/index.html",
+    "/PuppyOS/style.css",
 ];
 
 self.addEventListener("install", (event) => {

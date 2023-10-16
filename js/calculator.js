@@ -1,11 +1,18 @@
 import { Win } from "./desktop.js";
 class CalcResult {
+    root;
+    constructor() {
+        this.root = document.createElement("div");
+        this.root.style.height = "80px";
+        this.root.style.overflow = "auto";
+        this.root.contentEditable = "true";
+    }
 }
 class NumberPad {
     root;
     constructor(args) {
         this.root = document.createElement("div");
-        this.root.style.height = "100%";
+        // this.root.style.height = "100%"
         this.root.style.display = "flex";
         this.root.style.flexDirection = "row";
         this.root.onmousedown = (e) => {
@@ -28,8 +35,9 @@ class NumberPad {
             row.style.flexGrow = "1";
             middle.appendChild(row);
             for (let j = 0; j < 3; j++) {
+                const num = i * 3 + j + 1;
                 const btn = document.createElement("button");
-                btn.innerHTML = (i * 3 + j + 1).toString();
+                btn.innerHTML = num.toString();
                 // btn.style.width = "50px"
                 // btn.style.height = "50px"
                 // btn.style.borderRadius = "25px"
@@ -44,6 +52,9 @@ class NumberPad {
                 };
                 btn.onmouseout = () => {
                     btn.style.backgroundColor = "lightgray";
+                };
+                btn.onclick = () => {
+                    args.onNumberClick(num);
                 };
                 row.appendChild(btn);
             }
@@ -73,6 +84,9 @@ class NumberPad {
         equalsBtn.style.border = "none";
         equalsBtn.style.flexGrow = "1";
         equalsBtn.style.cursor = "pointer";
+        equalsBtn.onclick = () => {
+            args.onActionClick("=");
+        };
         row.appendChild(equalsBtn);
         const right = document.createElement("div");
         right.style.flexGrow = "1";
@@ -88,6 +102,9 @@ class NumberPad {
         timesBtn.style.border = "none";
         timesBtn.style.flexGrow = "1";
         timesBtn.style.cursor = "pointer";
+        timesBtn.onclick = () => {
+            args.onActionClick("*");
+        };
         right.appendChild(timesBtn);
         const divideBtn = document.createElement("button");
         divideBtn.style.flexGrow = "1";
@@ -97,6 +114,9 @@ class NumberPad {
         divideBtn.style.border = "none";
         divideBtn.style.flexGrow = "1";
         divideBtn.style.cursor = "pointer";
+        divideBtn.onclick = () => {
+            args.onActionClick("/");
+        };
         right.appendChild(divideBtn);
         const minusBtn = document.createElement("button");
         minusBtn.style.flexGrow = "1";
@@ -106,7 +126,22 @@ class NumberPad {
         minusBtn.style.border = "none";
         minusBtn.style.flexGrow = "1";
         minusBtn.style.cursor = "pointer";
+        minusBtn.onclick = () => {
+            args.onActionClick("-");
+        };
         right.appendChild(minusBtn);
+        const plusBtn = document.createElement("button");
+        plusBtn.style.flexGrow = "1";
+        plusBtn.innerHTML = "+";
+        plusBtn.style.width = "100%";
+        plusBtn.style.outline = "none";
+        plusBtn.style.border = "none";
+        plusBtn.style.flexGrow = "1";
+        plusBtn.style.cursor = "pointer";
+        plusBtn.onclick = () => {
+            args.onActionClick("+");
+        };
+        right.appendChild(plusBtn);
     }
 }
 export class CalculatorApp extends Win {
@@ -116,11 +151,38 @@ export class CalculatorApp extends Win {
             minHeight: 200,
             minWidth: 200,
         });
+        let expr_string = "";
+        this.content.style.display = "flex";
+        this.content.style.flexDirection = "column";
+        const res = new CalcResult();
+        this.content.appendChild(res.root);
+        res.root.innerHTML = expr_string.toString();
         const numberPad = new NumberPad({
-            onClick: (num) => {
-                console.log("clicked", num);
+            onNumberClick: (n) => {
+                console.log("clicked", n);
+                expr_string += n.toString();
+                res.root.innerHTML = expr_string.toString();
+            },
+            onActionClick: (action) => {
+                if (action === "=") {
+                    console.log("evaluating");
+                    try {
+                        const res = math.evaluate(expr_string);
+                        console.log("res", res);
+                        expr_string += " = " + res.toString();
+                    }
+                    catch (e) {
+                        console.error(e);
+                        expr_string = "invalid expression";
+                    }
+                    res.root.innerHTML = expr_string.toString();
+                    return;
+                }
+                expr_string += action.toString();
+                res.root.innerHTML = expr_string.toString();
             }
         });
+        numberPad.root.style.flexGrow = "1";
         this.content.appendChild(numberPad.root);
     }
 }

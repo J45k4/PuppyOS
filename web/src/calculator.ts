@@ -167,6 +167,7 @@ class NumberPad {
     }
 }
 
+declare var math: any
 export class CalculatorApp extends Win {
     public constructor() {
         super({

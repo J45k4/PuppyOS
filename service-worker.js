@@ -2,7 +2,7 @@ const CACHE_NAME = "puppyos-cache-v1";
 const urlsToCache = [
     "/",
     "/PuppyOS/index.html",
-    "/PuppyOS/style.css",
+    "/PuppyOS/index.css",
 ];
 
 self.addEventListener("install", (event) => {

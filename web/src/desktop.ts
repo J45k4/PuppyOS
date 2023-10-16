@@ -22,13 +22,11 @@ export class Desktop {
 
     public constructor(root: HTMLElement) {
         this.root = root
-        this.root.style.backgroundRepeat = "no-repeat"
-        this.root.style.backgroundSize = "cover"
+        this.root.id = "desktop"
         this.content = document.createElement("div")
         this.root.appendChild(this.content)
         this.toolbar = new Toolbar()
         this.root.appendChild(this.toolbar.root)
-        this.root.style.backgroundImage = `url("/PuppyOS/logo.jpeg")`
     }
 
     public addWind(win: Win) {

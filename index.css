@@ -13,3 +13,10 @@ body {
 .dropDownItem:hover {
     background-color: #f1f1f1;
 }
+
+#desktop {
+    background-size: contain;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-image: url("/PuppyOS/logo.jpeg");
+}

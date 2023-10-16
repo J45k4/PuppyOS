@@ -68,7 +68,8 @@ export class Timer extends Win {
                 ${createTimeString(diffTime(this.timeout_date))}
             </div>
             <div class="newTime">
-                <input 
+                <input
+                    class="newTimeInput" 
                     type="text"
                     placeholder="Enter time"
                 />
@@ -85,6 +86,8 @@ export class Timer extends Win {
             e.stopPropagation()
         }
 
+        const newTimeInput = container.querySelector(".newTimeInput") as HTMLInputElement
+
         const btn1 = container.querySelector(".bt1") as HTMLButtonElement
         const btn2 = container.querySelector(".bt2") as HTMLButtonElement
 
@@ -100,6 +103,19 @@ export class Timer extends Win {
 
         btn2.onclick = () => {
             if (!this.started) {
+                const val = newTimeInput.value
+
+                if (val) {
+                    const val_num = parseInt(val, 10)
+
+                    if (isNaN(val_num)) {
+                        return
+                    }
+
+                    this.time = val_num
+                    this.timeleft = val_num
+                }
+
                 this.started = true
                 this.running = true
                 this.timeout_date = new Date(Date.now() + this.timeleft * 1000)

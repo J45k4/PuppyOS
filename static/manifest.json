@@ -8,10 +8,10 @@
         "type": "image/png"
       }
     ],
-    "start_url": "/",
+    "start_url": "/PuppyOS",
     "background_color": "#ffffff",
     "display": "standalone",
-    "scope": "/",
+    "scope": "/PuppyOS",
     "theme_color": "#000000"
   }
   

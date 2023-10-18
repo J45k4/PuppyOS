@@ -16,12 +16,17 @@ export class DesktopIcon {
 }
 
 export class Desktop {
-    public root: HTMLElement
+    public root: HTMLDivElement
     public toolbar: Toolbar
     private content: HTMLDivElement
 
-    public constructor(root: HTMLElement) {
-        this.root = root
+    public constructor() {
+        this.root = document.createElement("div")
+        this.root.style.position = "absolute"
+        this.root.style.top = "0px"
+        this.root.style.left = "0px"
+        this.root.style.width = "100%"
+        this.root.style.height = "100%"
         this.root.id = "desktop"
         this.content = document.createElement("div")
         this.root.appendChild(this.content)
@@ -189,7 +194,6 @@ export class Win {
         rightResize.onmousedown = (ev: DragEvent) => {
             if (ev.button === 0) {
                 ev.stopPropagation()
-                console.log("bottomResize.onmousedown")
                 this.xResizing = true
                 this.dragClientX = ev.clientX
                 this.dragClientY = ev.clientY
@@ -198,7 +202,6 @@ export class Win {
         }
         rightResize.onmouseup = (ev: DragEvent) => {
             ev.stopPropagation()
-            console.log("bottomResize.onmouseup")
             this.xResizing = false
         }
 
@@ -218,7 +221,6 @@ export class Win {
         bottomResize.onmousedown = (ev: DragEvent) => {
             if (ev.button === 0) {
                 ev.stopPropagation()
-                console.log("bottomResize.onmousedown")
                 this.yResizing = true
                 this.dragClientX = ev.clientX
                 this.dragClientY = ev.clientY
@@ -227,7 +229,6 @@ export class Win {
         }
         bottomResize.onmouseup = (ev: DragEvent) => {
             ev.stopPropagation()
-            console.log("bottomResize.onmouseup")
             this.yResizing = false
         }
 
@@ -240,7 +241,6 @@ export class Win {
         rightDownResize.onmousedown = (ev: DragEvent) => {
             if (ev.button === 0) {
                 ev.stopPropagation()
-                console.log("rightDownResize.onmousedown")
                 this.xResizing = true
                 this.yResizing = true
                 this.dragClientX = ev.clientX
@@ -251,8 +251,6 @@ export class Win {
         }
         rightDownResize.onmouseup = (ev: DragEvent) => {
             ev.stopPropagation()
-            console.log("rightDownResize.onmouseup")
-
             this.xResizing = false
             this.yResizing = false
         }
@@ -265,18 +263,12 @@ export class Win {
         this.root.appendChild(bottom)
 
         this.root.onmousedown = (ev: DragEvent) => {
-            console.log("onDragStart")
             this.moving = true
-            console.log("offsetX: " + ev.offsetX)
-            console.log("offsetY: " + ev.offsetY)
-            console.log("clientX: " + ev.clientX)
-            console.log("clientY: " + ev.clientY)
             this.dragStartX = ev.offsetX
             this.dragStartY = ev.offsetY
         }
 
         window.addEventListener("mouseup", (ev: DragEvent) => {
-            console.log("onDragEnd")
             this.moving = false
             this.xResizing = false
             this.yResizing = false

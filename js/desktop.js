@@ -13,8 +13,13 @@ export class Desktop {
     root;
     toolbar;
     content;
-    constructor(root) {
-        this.root = root;
+    constructor() {
+        this.root = document.createElement("div");
+        this.root.style.position = "absolute";
+        this.root.style.top = "0px";
+        this.root.style.left = "0px";
+        this.root.style.width = "100%";
+        this.root.style.height = "100%";
         this.root.id = "desktop";
         this.content = document.createElement("div");
         this.root.appendChild(this.content);
@@ -149,7 +154,6 @@ export class Win {
         rightResize.onmousedown = (ev) => {
             if (ev.button === 0) {
                 ev.stopPropagation();
-                console.log("bottomResize.onmousedown");
                 this.xResizing = true;
                 this.dragClientX = ev.clientX;
                 this.dragClientY = ev.clientY;
@@ -158,7 +162,6 @@ export class Win {
         };
         rightResize.onmouseup = (ev) => {
             ev.stopPropagation();
-            console.log("bottomResize.onmouseup");
             this.xResizing = false;
         };
         const middle = document.createElement("div");
@@ -176,7 +179,6 @@ export class Win {
         bottomResize.onmousedown = (ev) => {
             if (ev.button === 0) {
                 ev.stopPropagation();
-                console.log("bottomResize.onmousedown");
                 this.yResizing = true;
                 this.dragClientX = ev.clientX;
                 this.dragClientY = ev.clientY;
@@ -185,7 +187,6 @@ export class Win {
         };
         bottomResize.onmouseup = (ev) => {
             ev.stopPropagation();
-            console.log("bottomResize.onmouseup");
             this.yResizing = false;
         };
         const rightDownResize = document.createElement("div");
@@ -197,7 +198,6 @@ export class Win {
         rightDownResize.onmousedown = (ev) => {
             if (ev.button === 0) {
                 ev.stopPropagation();
-                console.log("rightDownResize.onmousedown");
                 this.xResizing = true;
                 this.yResizing = true;
                 this.dragClientX = ev.clientX;
@@ -208,7 +208,6 @@ export class Win {
         };
         rightDownResize.onmouseup = (ev) => {
             ev.stopPropagation();
-            console.log("rightDownResize.onmouseup");
             this.xResizing = false;
             this.yResizing = false;
         };
@@ -219,17 +218,11 @@ export class Win {
         bottom.appendChild(rightDownResize);
         this.root.appendChild(bottom);
         this.root.onmousedown = (ev) => {
-            console.log("onDragStart");
             this.moving = true;
-            console.log("offsetX: " + ev.offsetX);
-            console.log("offsetY: " + ev.offsetY);
-            console.log("clientX: " + ev.clientX);
-            console.log("clientY: " + ev.clientY);
             this.dragStartX = ev.offsetX;
             this.dragStartY = ev.offsetY;
         };
         window.addEventListener("mouseup", (ev) => {
-            console.log("onDragEnd");
             this.moving = false;
             this.xResizing = false;
             this.yResizing = false;

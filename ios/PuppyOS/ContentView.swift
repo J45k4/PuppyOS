@@ -6,26 +6,23 @@
 //
 
 import SwiftUI
-
-struct TimeEntry: Identifiable, Codable {
-    let id: UUID
-    var title: String
-    var start: Date
-    var end: Date
-    
-    var duration: TimeInterval { end.timeIntervalSince(start) }
-}
+import CoreData
 
 struct ContentView: View {
+    @Environment(\.managedObjectContext) private var context
     @State private var isPlaying = false
     @State private var description: String = ""
-    @State private var entries: [TimeEntry] = []
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \TimeEntryEntity.start, ascending: false)],
+        animation: .default
+    ) private var entries: FetchedResults<TimeEntryEntity>
     @State private var currentStart: Date? = nil
     @State private var now: Date = Date()
     @State private var showingNewEntry: Bool = false
     let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    
-    private let entriesKey = "TimeEntries"
+    // Keys for persisting the in-progress tracking session
+    private let currentStartKey = "CurrentTrackingStart"
+    private let currentDescKey = "CurrentTrackingDescription"
     
     var body: some View {
         NavigationStack {
@@ -112,6 +109,7 @@ struct ContentView: View {
                             set: { newVal in
                                 // Prevent setting start in the future
                                 currentStart = min(newVal, now)
+                                persistCurrentTracking()
                             }
                         ),
                         in: ...now,
@@ -135,14 +133,12 @@ struct ContentView: View {
 
             // List of saved time entries under the text input
             List {
-                let sorted = entries.sorted(by: { $0.start > $1.start })
-                ForEach(sorted) { entry in
+                ForEach(entries) { entry in
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         NavigationLink {
-                            EntryDetailView(entry: entry) { updated in
-                                updateEntry(updated)
-                            } onDelete: {
-                                deleteEntry(id: entry.id)
+                            EntryDetailView(entry: entry) {
+                                context.delete(entry)
+                                try? context.save()
                             }
                         } label: {
                             VStack(alignment: .leading, spacing: 2) {
@@ -164,11 +160,7 @@ struct ContentView: View {
                     }
                     .padding(.vertical, 2)
                 }
-                .onDelete { offsets in
-                    let idsToDelete = offsets.map { sorted[$0].id }
-                    entries.removeAll { idsToDelete.contains($0.id) }
-                    saveEntries()
-                }
+                .onDelete(perform: deleteOffsets)
             }
             .listStyle(.plain)
         }
@@ -183,7 +175,6 @@ struct ContentView: View {
                 .accessibilityLabel("Add time entry")
             }
         }
-        .onAppear(perform: loadEntries)
         .onReceive(ticker) { value in
             now = value
         }
@@ -191,13 +182,12 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingNewEntry) {
             NavigationStack {
-                EntryDetailView(
-                    entry: TimeEntry(id: UUID(), title: "", start: Date(), end: Date())
-                ) { newEntry in
-                    entries.append(newEntry)
-                    saveEntries()
-                }
+                NewEntryView()
             }
+        }
+        .onAppear(perform: loadCurrentTracking)
+        .onChange(of: description) { _ in
+            if isPlaying { persistCurrentTracking() }
         }
     }
     
@@ -206,26 +196,35 @@ struct ContentView: View {
             // Stop and save entry
             let start = currentStart ?? Date()
             let end = Date()
-            let entry = TimeEntry(id: UUID(), title: description.trimmingCharacters(in: .whitespacesAndNewlines), start: start, end: end)
-            entries.append(entry)
-            saveEntries()
+            let obj = TimeEntryEntity(context: context)
+            obj.id = UUID()
+            obj.title = description.trimmingCharacters(in: .whitespacesAndNewlines)
+            obj.start = start
+            obj.end = end
+            try? context.save()
             currentStart = nil
             isPlaying = false
+            description = ""
+            clearCurrentTracking()
         } else {
             // Start tracking
             currentStart = Date()
             isPlaying = true
+            persistCurrentTracking()
         }
     }
 
-    private func startTracking(from entry: TimeEntry) {
+    private func startTracking(from entry: TimeEntryEntity) {
         // If a session is active, finalize it first
         if isPlaying {
             let start = currentStart ?? Date()
             let end = Date()
-            let current = TimeEntry(id: UUID(), title: description.trimmingCharacters(in: .whitespacesAndNewlines), start: start, end: end)
-            entries.append(current)
-            saveEntries()
+            let current = TimeEntryEntity(context: context)
+            current.id = UUID()
+            current.title = description.trimmingCharacters(in: .whitespacesAndNewlines)
+            current.start = start
+            current.end = end
+            try? context.save()
         }
         // Start a new session with the same title
         description = entry.title
@@ -233,42 +232,17 @@ struct ContentView: View {
         isPlaying = true
     }
     
-    private func saveEntries() {
-        do {
-            let data = try JSONEncoder().encode(entries)
-            UserDefaults.standard.set(data, forKey: entriesKey)
-        } catch {
-            print("Failed to save entries: \(error)")
-        }
-    }
-    
-    private func updateEntry(_ updated: TimeEntry) {
-        if let idx = entries.firstIndex(where: { $0.id == updated.id }) {
-            entries[idx] = updated
-            saveEntries()
-        }
-    }
-    
     private func discardCurrent() {
         // Cancel current tracking without saving
         currentStart = nil
         isPlaying = false
         description = ""
+        clearCurrentTracking()
     }
     
-    private func deleteEntry(id: UUID) {
-        entries.removeAll { $0.id == id }
-        saveEntries()
-    }
-    
-    private func loadEntries() {
-        guard let data = UserDefaults.standard.data(forKey: entriesKey) else { return }
-        do {
-            let decoded = try JSONDecoder().decode([TimeEntry].self, from: data)
-            entries = decoded
-        } catch {
-            print("Failed to load entries: \(error)")
-        }
+    private func deleteOffsets(_ offsets: IndexSet) {
+        for index in offsets { context.delete(entries[index]) }
+        try? context.save()
     }
     
     private func formattedDate(_ date: Date) -> String {
@@ -303,6 +277,31 @@ struct ContentView: View {
             }
         }
         return results
+    }
+    
+    private func persistCurrentTracking() {
+        guard let start = currentStart, isPlaying else {
+            clearCurrentTracking()
+            return
+        }
+        let ud = UserDefaults.standard
+        ud.set(start, forKey: currentStartKey)
+        ud.set(description, forKey: currentDescKey)
+    }
+    
+    private func clearCurrentTracking() {
+        let ud = UserDefaults.standard
+        ud.removeObject(forKey: currentStartKey)
+        ud.removeObject(forKey: currentDescKey)
+    }
+    
+    private func loadCurrentTracking() {
+        let ud = UserDefaults.standard
+        if let start = ud.object(forKey: currentStartKey) as? Date {
+            currentStart = min(start, Date())
+            isPlaying = true
+            description = ud.string(forKey: currentDescKey) ?? ""
+        }
     }
 }
 

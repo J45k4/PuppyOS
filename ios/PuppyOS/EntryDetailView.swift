@@ -1,9 +1,10 @@
 import SwiftUI
+import CoreData
 
 struct EntryDetailView: View {
     @Environment(\.dismiss) private var dismiss
-    @State var entry: TimeEntry
-    var onSave: (TimeEntry) -> Void
+    @Environment(\.managedObjectContext) private var context
+    @ObservedObject var entry: TimeEntryEntity
     var onDelete: (() -> Void)? = nil
     
     @State private var descriptionText: String = ""
@@ -27,8 +28,8 @@ struct EntryDetailView: View {
             }
             
             Section(header: Text("Timing")) {
-                DatePicker("Start", selection: $entry.start, displayedComponents: [.date, .hourAndMinute])
-                DatePicker("End", selection: $entry.end, in: entry.start...Date.distantFuture, displayedComponents: [.date, .hourAndMinute])
+                DatePicker("Start", selection: Binding(get: { entry.start }, set: { entry.start = $0 }), displayedComponents: [.date, .hourAndMinute])
+                DatePicker("End", selection: Binding(get: { entry.end }, set: { entry.end = max($0, entry.start) }), in: entry.start...Date.distantFuture, displayedComponents: [.date, .hourAndMinute])
                 HStack {
                     Text("Duration")
                     Spacer()
@@ -56,10 +57,9 @@ struct EntryDetailView: View {
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
-                    var updated = entry
-                    updated.title = descriptionText.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if updated.end < updated.start { updated.end = updated.start }
-                    onSave(updated)
+                    entry.title = descriptionText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if entry.end < entry.start { entry.end = entry.start }
+                    try? context.save()
                     dismiss()
                 }
             }

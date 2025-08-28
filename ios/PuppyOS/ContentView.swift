@@ -10,9 +10,12 @@ import CoreData
 
 struct ContentView: View {
     @Environment(\.managedObjectContext) private var context
+    @Environment(\.tabSwitcher) private var switchTab
+    @Environment(\.toggleMenu) private var toggleMenu
     @State private var isPlaying = false
     @State private var description: String = ""
     @FetchRequest(
+        entity: TimeEntryEntity.entity(),
         sortDescriptors: [NSSortDescriptor(keyPath: \TimeEntryEntity.start, ascending: false)],
         animation: .default
     ) private var entries: FetchedResults<TimeEntryEntity>
@@ -174,6 +177,10 @@ struct ContentView: View {
                 }
                 .accessibilityLabel("Add time entry")
             }
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button { toggleMenu() } label: { Image(systemName: "line.3.horizontal") }
+                    .accessibilityLabel("Open menu")
+            }
         }
         .onReceive(ticker) { value in
             now = value
@@ -306,5 +313,9 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    let pc = PersistenceController(inMemory: true)
+    return ContentView()
+        .environment(\.managedObjectContext, pc.container.viewContext)
+        .environment(\.tabSwitcher, { _ in })
+        .environment(\.toggleMenu, { })
 }

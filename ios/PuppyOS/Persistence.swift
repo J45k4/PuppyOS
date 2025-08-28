@@ -18,6 +18,21 @@ class TimeEntryEntity: NSManagedObject {
 // Make Core Data entity identifiable for SwiftUI lists
 extension TimeEntryEntity: Identifiable {}
 
+@objc(TimerEntity)
+class TimerEntity: NSManagedObject {
+    @NSManaged var id: UUID
+    @NSManaged var title: String
+    @NSManaged var end: Date
+    @NSManaged var isRunning: Bool
+    @NSManaged var notificationId: String?
+    
+    @nonobjc class func fetchRequest() -> NSFetchRequest<TimerEntity> {
+        NSFetchRequest<TimerEntity>(entityName: "TimerEntity")
+    }
+}
+
+extension TimerEntity: Identifiable {}
+
 struct PersistenceController {
     static let shared = PersistenceController()
     let container: NSPersistentContainer
@@ -42,9 +57,9 @@ struct PersistenceController {
     private static func makeModel() -> NSManagedObjectModel {
         let model = NSManagedObjectModel()
         
-        let entity = NSEntityDescription()
-        entity.name = "TimeEntryEntity"
-        entity.managedObjectClassName = NSStringFromClass(TimeEntryEntity.self)
+        let timeEntry = NSEntityDescription()
+        timeEntry.name = "TimeEntryEntity"
+        timeEntry.managedObjectClassName = NSStringFromClass(TimeEntryEntity.self)
         
         let id = NSAttributeDescription()
         id.name = "id"
@@ -67,8 +82,43 @@ struct PersistenceController {
         end.attributeType = .dateAttributeType
         end.isOptional = false
         
-        entity.properties = [id, title, start, end]
-        model.entities = [entity]
+        timeEntry.properties = [id, title, start, end]
+
+        // TimerEntity
+        let timerEntity = NSEntityDescription()
+        timerEntity.name = "TimerEntity"
+        timerEntity.managedObjectClassName = NSStringFromClass(TimerEntity.self)
+
+        let tId = NSAttributeDescription()
+        tId.name = "id"
+        tId.attributeType = .UUIDAttributeType
+        tId.isOptional = false
+
+        let tTitle = NSAttributeDescription()
+        tTitle.name = "title"
+        tTitle.attributeType = .stringAttributeType
+        tTitle.isOptional = false
+        tTitle.defaultValue = ""
+
+        let tEnd = NSAttributeDescription()
+        tEnd.name = "end"
+        tEnd.attributeType = .dateAttributeType
+        tEnd.isOptional = false
+
+        let tRunning = NSAttributeDescription()
+        tRunning.name = "isRunning"
+        tRunning.attributeType = .booleanAttributeType
+        tRunning.isOptional = false
+        tRunning.defaultValue = false
+
+        let tNotif = NSAttributeDescription()
+        tNotif.name = "notificationId"
+        tNotif.attributeType = .stringAttributeType
+        tNotif.isOptional = true
+
+        timerEntity.properties = [tId, tTitle, tEnd, tRunning, tNotif]
+
+        model.entities = [timeEntry, timerEntity]
         return model
     }
 }

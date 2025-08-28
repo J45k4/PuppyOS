@@ -59,6 +59,40 @@ struct ContentView: View {
             )
             .padding(.horizontal)
 
+            // Suggestions from past entries matching current description
+            if !matchingSuggestions.isEmpty {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(matchingSuggestions, id: \.self) { suggestion in
+                        Button {
+                            description = suggestion
+                        } label: {
+                            HStack {
+                                Image(systemName: "text.magnifyingglass")
+                                    .foregroundColor(.secondary)
+                                Text(suggestion)
+                                    .foregroundColor(.primary)
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                        }
+                        .buttonStyle(.plain)
+                        if suggestion != matchingSuggestions.last { Divider() }
+                    }
+                }
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(.background)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                )
+                .padding(.horizontal)
+            }
+
             // Current running timer display
             if isPlaying, let start = currentStart {
                 VStack(alignment: .leading, spacing: 8) {
@@ -84,19 +118,33 @@ struct ContentView: View {
                         displayedComponents: [.date, .hourAndMinute]
                     )
                     .datePickerStyle(.compact)
+
+                    HStack {
+                        Spacer()
+                        Button(role: .destructive) {
+                            discardCurrent()
+                        } label: {
+                            Label("Discard", systemImage: "trash")
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(.red)
+                    }
                 }
                 .padding(.horizontal)
             }
 
             // List of saved time entries under the text input
             List {
-                ForEach(entries.sorted(by: { $0.start > $1.start })) { entry in
-                    NavigationLink {
-                        EntryDetailView(entry: entry) { updated in
-                            updateEntry(updated)
-                        }
-                    } label: {
-                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                let sorted = entries.sorted(by: { $0.start > $1.start })
+                ForEach(sorted) { entry in
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        NavigationLink {
+                            EntryDetailView(entry: entry) { updated in
+                                updateEntry(updated)
+                            } onDelete: {
+                                deleteEntry(id: entry.id)
+                            }
+                        } label: {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(entry.title.isEmpty ? "(No title)" : entry.title)
                                     .font(.headline)
@@ -104,10 +152,22 @@ struct ContentView: View {
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                             }
-                            Spacer()
                         }
-                        .padding(.vertical, 2)
+                        Spacer(minLength: 8)
+                        Button(action: { startTracking(from: entry) }) {
+                            Image(systemName: "play.fill")
+                                .imageScale(.medium)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(.blue)
+                        .accessibilityLabel("Start new tracking with this entry")
                     }
+                    .padding(.vertical, 2)
+                }
+                .onDelete { offsets in
+                    let idsToDelete = offsets.map { sorted[$0].id }
+                    entries.removeAll { idsToDelete.contains($0.id) }
+                    saveEntries()
                 }
             }
             .listStyle(.plain)
@@ -157,6 +217,21 @@ struct ContentView: View {
             isPlaying = true
         }
     }
+
+    private func startTracking(from entry: TimeEntry) {
+        // If a session is active, finalize it first
+        if isPlaying {
+            let start = currentStart ?? Date()
+            let end = Date()
+            let current = TimeEntry(id: UUID(), title: description.trimmingCharacters(in: .whitespacesAndNewlines), start: start, end: end)
+            entries.append(current)
+            saveEntries()
+        }
+        // Start a new session with the same title
+        description = entry.title
+        currentStart = Date()
+        isPlaying = true
+    }
     
     private func saveEntries() {
         do {
@@ -172,6 +247,18 @@ struct ContentView: View {
             entries[idx] = updated
             saveEntries()
         }
+    }
+    
+    private func discardCurrent() {
+        // Cancel current tracking without saving
+        currentStart = nil
+        isPlaying = false
+        description = ""
+    }
+    
+    private func deleteEntry(id: UUID) {
+        entries.removeAll { $0.id == id }
+        saveEntries()
     }
     
     private func loadEntries() {
@@ -197,6 +284,25 @@ struct ContentView: View {
         f.unitsStyle = .abbreviated
         f.zeroFormattingBehavior = .pad
         return f.string(from: interval) ?? "0s"
+    }
+
+    private var matchingSuggestions: [String] {
+        let query = description.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return [] }
+        var seen = Set<String>()
+        var results: [String] = []
+        for entry in entries.sorted(by: { $0.start > $1.start }) {
+            let title = entry.title.trimmingCharacters(in: .whitespacesAndNewlines)
+            let key = title.lowercased()
+            if title.isEmpty { continue }
+            if seen.contains(key) { continue }
+            if title.range(of: query, options: .caseInsensitive) != nil && key != query.lowercased() {
+                results.append(title)
+                seen.insert(key)
+                if results.count >= 6 { break }
+            }
+        }
+        return results
     }
 }
 

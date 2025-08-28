@@ -4,6 +4,7 @@ struct EntryDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State var entry: TimeEntry
     var onSave: (TimeEntry) -> Void
+    var onDelete: (() -> Void)? = nil
     
     @State private var descriptionText: String = ""
     
@@ -40,6 +41,19 @@ struct EntryDetailView: View {
         .navigationTitle("Edit Entry")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                if onDelete == nil { // treat as add-new flow; show Cancel
+                    Button("Cancel") { dismiss() }
+                }
+            }
+            ToolbarItem(placement: .destructiveAction) {
+                if let onDelete {
+                    Button(role: .destructive) {
+                        onDelete()
+                        dismiss()
+                    } label: { Text("Delete") }
+                }
+            }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
                     var updated = entry

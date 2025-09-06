@@ -3,6 +3,8 @@ import SwiftUI
 enum SideMenuItem: Hashable {
     case track
     case timers
+    case files
+    case photos
 }
 
 struct SideMenuView: View {
@@ -33,6 +35,18 @@ struct SideMenuView: View {
                     .padding(.vertical, 12)
             }
             .buttonStyle(.plain)
+            Button { onSelect(.files) } label: {
+                Label("Files", systemImage: "folder")
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+            }
+            .buttonStyle(.plain)
+            Button { onSelect(.photos) } label: {
+                Label("Photos", systemImage: "photo.on.rectangle")
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+            }
+            .buttonStyle(.plain)
             Spacer()
             Text("v1.0")
                 .font(.footnote)
@@ -45,4 +59,3 @@ struct SideMenuView: View {
         .background(.ultraThickMaterial)
     }
 }
-

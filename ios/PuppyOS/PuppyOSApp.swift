@@ -23,6 +23,12 @@ struct PuppyOSApp: App {
                     TimersView()
                         .tabItem { Label("Timers", systemImage: "timer") }
                         .tag(AppTab.timers)
+                    FileBrowserView()
+                        .tabItem { Label("Files", systemImage: "folder") }
+                        .tag(AppTab.files)
+                    GalleryView()
+                        .tabItem { Label("Photos", systemImage: "photo.on.rectangle") }
+                        .tag(AppTab.photos)
                 }
                 .disabled(showMenu)
 
@@ -35,6 +41,8 @@ struct PuppyOSApp: App {
                     switch item {
                     case .track: appState.selectedTab = .track
                     case .timers: appState.selectedTab = .timers
+                    case .files: appState.selectedTab = .files
+                    case .photos: appState.selectedTab = .photos
                     }
                     withAnimation(.easeInOut) { showMenu = false }
                 }

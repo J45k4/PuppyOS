@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# expand rootfs to fill disk (growpart + resize2fs if present)
+if command -v growpart >/dev/null 2>&1; then
+  apt-get update && apt-get -y install cloud-guest-utils || true
+fi
+if lsblk -no FSTYPE /dev/mmcblk0p2 2>/dev/null | grep -q ext; then
+  growpart /dev/mmcblk0 2 || true
+  resize2fs /dev/mmcblk0p2 || true
+fi
+
+# create user 'puppy' with sudo (passwordless by default)
+USR=${PUPPY_USER:-puppy}
+if ! id "$USR" >/dev/null 2>&1; then
+  useradd -m -s /bin/bash "$USR"
+  usermod -aG sudo "$USR"
+  mkdir -p /home/$USR/.ssh
+  chmod 700 /home/$USR/.ssh
+  # If you bake an SSH key at build time, drop it into overlays/home/puppy/.ssh/authorized_keys
+  # Or set PUPPY_PW env to enable password login:
+  if [[ -n "${PUPPY_PW:-}" ]]; then
+    echo "$USR:${PUPPY_PW}" | chpasswd
+    sed -i 's/^PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+    systemctl restart ssh
+  fi
+fi
+
+# one-shot: disable self
+systemctl disable puppy-firstboot.service || true
+rm -f /usr/local/bin/puppy-firstboot
+echo "First boot done."

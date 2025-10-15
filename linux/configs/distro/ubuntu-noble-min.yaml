@@ -1,0 +1,25 @@
+release: noble
+arch: arm64
+mirror: http://ports.ubuntu.com/
+seed_packages:
+  - systemd-sysv
+  - netplan.io
+  - systemd-timesyncd
+  - openssh-server
+  - sudo
+  - vim-tiny
+  - less
+  - ca-certificates
+  - kmod
+  - iproute2
+  - iputils-ping
+  - resolvconf
+  - udev
+  - busybox
+purge_packages:
+  - snapd
+  - cloud-init
+settings:
+  hostname: puppyos
+  timezone: Etc/UTC
+  locale: en_US.UTF-8

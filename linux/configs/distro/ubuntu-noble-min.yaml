@@ -13,9 +13,7 @@ seed_packages:
   - kmod
   - iproute2
   - iputils-ping
-  - resolvconf
   - udev
-  - busybox
 purge_packages:
   - snapd
   - cloud-init

@@ -116,6 +116,8 @@ check_files() {
     rockchip)
       [[ -f "$IDBLOADER_IMG" ]] || die "Missing $IDBLOADER_IMG"
       [[ -f "$UBOOT_ITB" ]]     || die "Missing $UBOOT_ITB"
+      itb_sz="$(stat -c%s "$UBOOT_ITB" 2>/dev/null || echo 0)"
+      (( itb_sz >= 262144 )) || die "UBOOT_ITB too small (${itb_sz} bytes). This is almost certainly NOT a real U-Boot FIT."
       ;;
     sunxi)
       [[ -f "$SUNXI_UBOOT" ]] || die "Missing $SUNXI_UBOOT"

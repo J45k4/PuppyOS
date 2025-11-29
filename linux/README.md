@@ -28,13 +28,15 @@ You also need to keep the kernel, U-Boot, and Rockchip blobs repositories in `ke
 
 The single `Makefile` in this directory now orchestrates the kernel, U-Boot, and rootfs builds:
 
-- `make BOARD=opi5b` (or `make all`) – builds the kernel image/DTBs, packages U-Boot, creates the rootfs, and assembles `build/images/puppyos-noble-min-<board>.img`.
+- `make BOARD=opi5b` (or `make all`) – builds the kernel image/DTBs, packages U-Boot, creates the rootfs, and assembles `build/images/puppyos-<board>.img`.
 - `make kernel` – runs `scripts/build-kernel.sh`, depositing `build/kernel/<board>/`.
 - `make uboot` – runs `scripts/build-uboot.sh`, depositing `build/uboot/<board>/`.
 - `make rootfs` – runs `scripts/build-rootfs.sh` with `overlays/` and `configs/distro/ubuntu-noble-min.yaml`, storing the rootfs under `build/rootfs/`.
 - `make image` – bundles the above artifacts using `scripts/assemble-image.sh`.
 - `make flash` – pushes the assembled image over USB with `scripts/flash-rk.sh`.
 - `make clean` – nukes `build/`.
+- Skip knobs: set `SKIP_KERNEL=1`, `SKIP_UBOOT=1`, or `SKIP_ROOTFS=1` with `make image` if you already have artifacts staged under `build/` and only want to repack the image.
+- Overlays: `OVERLAYS` defaults to `overlays/`. If `linux/local-overlays/` exists (git-ignored), it is applied automatically after `OVERLAYS` so you can inject private files such as SSH keys without passing extra args.
 
 Pass `BOARD`, `BUILD_ROOT`, or `FRAGMENT` if you want to target other RK3588 configurations or custom fragments.
 
@@ -72,7 +74,13 @@ export BL31=/path/to/rkbin/bin/rk35/rk3588_bl31_v1.51.elf
 
 ## Overlays and First Boot
 
-`scripts/build-rootfs.sh` copies the contents of `overlays/` into the rootfs after debootstrap, so drop SSH keys, systemd units, or user config there. The provided distro config disables password SSH logins, enables `puppy-firstboot.service`, and hardens the system (see `configs/distro/ubuntu-noble-min.yaml`).
+`scripts/build-rootfs.sh` copies the contents of `overlays/` into the rootfs after debootstrap, so drop SSH keys, systemd units, or user config there. The provided distro config disables password SSH logins, enables `puppy-firstboot.service`, and hardens the system (see `configs/distro/ubuntu-noble-min.yaml`). If `linux/local-overlays/` exists (git-ignored), it is layered automatically after `overlays/`—ideal for private `authorized_keys` or other secrets without touching the repo. Example:
+
+```
+mkdir -p linux/local-overlays/home/puppy/.ssh
+cp ~/.ssh/id_rsa.pub linux/local-overlays/home/puppy/.ssh/authorized_keys
+make -C linux BOARD=opi5b
+```
 
 ## Flashing and Writing SD Cards
 

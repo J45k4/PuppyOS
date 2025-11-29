@@ -4,3 +4,4 @@ build/
 kernel/
 uboot/
 rkbin/
+local-overlays/

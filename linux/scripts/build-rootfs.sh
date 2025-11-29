@@ -6,6 +6,8 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 OVERLAYS_DIR="${1:?overlays dir}"
 CFG="${2:?distro yaml}"
 OUT="${3:-${ROOT_DIR}/build/rootfs}"
+shift 3
+EXTRA_OVERLAYS=("$@")
 
 # deps: debootstrap qemu-user-static binfmt-support yq
 REL=$(yq -r '.release' "$CFG")
@@ -68,8 +70,12 @@ passwd -l root
 sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication no/' /etc/ssh/sshd_config
 CHROOT
 
-# overlays
-sudo rsync -aHAX "$OVERLAYS_DIR"/ "$OUT"/
+# overlays (primary + any extras)
+for overlay in "$OVERLAYS_DIR" "${EXTRA_OVERLAYS[@]}"; do
+	if [[ -d "$overlay" ]]; then
+		sudo rsync -aHAX "$overlay"/ "$OUT"/
+	fi
+done
 
 # ensure firstboot runs
 sudo chroot "$OUT" systemctl enable puppy-firstboot.service

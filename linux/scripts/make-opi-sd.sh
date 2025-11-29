@@ -23,6 +23,10 @@ DTB_FILE="${DTB_FILE:-${BUILD_ROOT}/kernel/${BOARD}/rk3588s-orangepi-5.dtb}"
 ROOTFS_DIR="${ROOTFS_DIR:-${BUILD_ROOT}/rootfs}"
 ROOTFS_TAR="${ROOTFS_TAR:-}"
 
+# Prebuilt disk image (optional): if set, the script writes this image directly
+# and skips the manual partitioning/copy flow.
+DISK_IMG="${DISK_IMG:-}"
+
 # Kernel console
 CONSOLE="${CONSOLE:-ttyS2,1500000}"   # Orange Pi 5 typical
 
@@ -93,6 +97,11 @@ ensure_removable_usb_or_mmc() {
 }
 
 check_files() {
+  if [[ -n "$DISK_IMG" ]]; then
+    [[ -f "$DISK_IMG" ]] || die "Disk image not found: $DISK_IMG"
+    return
+  fi
+
   [[ -f "$KERNEL_IMAGE" ]] || die "Kernel image not found: $KERNEL_IMAGE"
   [[ -f "$DTB_FILE" ]]     || die "DTB file not found: $DTB_FILE"
   if [[ -n "$ROOTFS_DIR" && -d "$ROOTFS_DIR" ]]; then
@@ -134,6 +143,7 @@ unmount_partitions() {
 }
 
 write_bootloader() {
+  [[ -n "$DISK_IMG" ]] && return
   echo ">> Writing U-Boot for $SOC to $DEV"
   case "$SOC" in
     rockchip)
@@ -147,6 +157,7 @@ write_bootloader() {
 }
 
 partition_device() {
+  [[ -n "$DISK_IMG" ]] && return
   echo ">> Creating partition table on $DEV"
   parted -s "$DEV" mklabel msdos
   parted -s "$DEV" mkpart primary fat32 1MiB "$BOOT_SIZE"
@@ -156,12 +167,14 @@ partition_device() {
 }
 
 make_filesystems() {
+  [[ -n "$DISK_IMG" ]] && return
   echo ">> Creating filesystems"
   mkfs.vfat -n BOOT "${DEV}1"
   mkfs.ext4 -L rootfs "${DEV}2"
 }
 
 mount_partitions() {
+  [[ -n "$DISK_IMG" ]] && return
   echo ">> Mounting partitions"
   mkdir -p "$BOOT_MNT" "$ROOT_MNT"
   mount "${DEV}1" "$BOOT_MNT"
@@ -169,6 +182,7 @@ mount_partitions() {
 }
 
 install_kernel_and_dtb() {
+  [[ -n "$DISK_IMG" ]] && return
   echo ">> Installing kernel and DTB"
   cp "$KERNEL_IMAGE" "$BOOT_MNT/Image"
 
@@ -190,6 +204,7 @@ EOF
 }
 
 install_rootfs() {
+  [[ -n "$DISK_IMG" ]] && return
   echo ">> Installing root filesystem"
   if [[ -n "$ROOTFS_DIR" && -d "$ROOTFS_DIR" ]]; then
     rsync -aHAX "$ROOTFS_DIR"/ "$ROOT_MNT"/
@@ -203,10 +218,18 @@ install_rootfs() {
 }
 
 cleanup() {
+  [[ -n "$DISK_IMG" ]] && return
   echo ">> Syncing and unmounting"
   sync
   umount "$BOOT_MNT" || true
   umount "$ROOT_MNT" || true
+  echo "Done. SD card is ready."
+}
+
+write_full_image() {
+  echo ">> Writing disk image $DISK_IMG to $DEV"
+  dd if="$DISK_IMG" of="$DEV" bs=4M status=progress conv=fsync
+  sync
   echo "Done. SD card is ready."
 }
 
@@ -220,11 +243,16 @@ ensure_not_root_disk
 ensure_removable_usb_or_mmc
 check_files
 confirm
-unmount_partitions
-write_bootloader
-partition_device
-make_filesystems
-mount_partitions
-install_kernel_and_dtb
-install_rootfs
-cleanup
+if [[ -n "$DISK_IMG" ]]; then
+  unmount_partitions
+  write_full_image
+else
+  unmount_partitions
+  write_bootloader
+  partition_device
+  make_filesystems
+  mount_partitions
+  install_kernel_and_dtb
+  install_rootfs
+  cleanup
+fi

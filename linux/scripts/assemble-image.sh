@@ -7,6 +7,11 @@ UBOOT_DIR=""
 KERNEL_DIR=""
 BOARD=""
 
+# Ensure we have the privileges needed for loop/mount/mkfs; re-exec with sudo if not.
+if [[ $EUID -ne 0 ]]; then
+  exec sudo CONSOLE="${CONSOLE:-}" BOOTARGS_EXTRA="${BOOTARGS_EXTRA:-}" "$0" "$@"
+fi
+
 while [[ $# -gt 0 ]]; do
   case $1 in
     --output) OUT_IMG="$2"; shift 2;;

@@ -47,13 +47,13 @@ The kernel tree lives in `kernel/`. Keep it up to date yourself (e.g., `git pull
 ```bash
 cd linux/kernel
 make ARCH=arm64 defconfig
-./scripts/kconfig/merge_config.sh -m .config linux/kernels/configs/rk3588_mainline_min.headless.fragment
+./scripts/kconfig/merge_config.sh -m .config linux/kernels/configs/rk3588_mainline_min.hdmi.fragment
 make ARCH=arm64 olddefconfig
 make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image dtbs modules
 sudo make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=/path/to/work/rootfs modules_install
 ```
 
-`scripts/mkconfig-mainline.sh` encapsulates the first three steps if you want to reuse the fragment elsewhere. It now accepts defaults automatically when `olddefconfig` asks about new Kconfig options, so you can run it non-interactively. `scripts/build-kernel.sh` will clone https://git.kernel.org/.../stable/linux.git into `linux/kernel/` if it is missing, keep it synced, run the helper, and copy `Image` plus RK3588 DTBs into `build/kernel/<board>/`.
+`scripts/mkconfig-mainline.sh` now defaults to `rk3588_mainline_min.hdmi.fragment` so the build enables the Rockchip HDMI/VOP stack; pass `FRAGMENT=linux/kernels/configs/rk3588_mainline_min.headless.fragment` if you need the smaller headless set. The helper script keeps the merge interactive-free, and `scripts/build-kernel.sh` clones https://git.kernel.org/.../stable/linux.git into `linux/kernel/` if it is missing, keeps it synced, runs the helper, and copies `Image` plus RK3588 DTBs into `build/kernel/<board>/`.
 
 ## U-Boot notes
 
@@ -86,5 +86,7 @@ make -C linux BOARD=opi5b
 
 - `scripts/make-opi-sd.sh /dev/sdX` – writes the SD card directly using the kernel, DTB, rootfs, and U-Boot artifacts produced under `build/`. It expects Rockchip `idbloader.img` + `u-boot.itb` when `SOC=rockchip`.
 - `make flash` – wraps `rkdeveloptool` for USB flashing (`scripts/flash-rk.sh`).
+
+- `scripts/write-image.sh <image> <device>` – safety wrapper around `dd` that validates the image (size plus partition table), confirms the target is removable/not the host disk, runs a read-back comparison after `dd`, and prompts before writing so you can flash `build/images/puppyos-<board>.img` confidently.
 
 Ensure the target device is unmounted before running the SD card script. All boot assets are pulled from `build/`; rerun `make` if you change kernel/U-Boot/rootfs inputs.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 KDIR="${1:-$PWD}"
-FRAG="${2:-kernels/configs/rk3588_mainline_min.headless.fragment}"
+FRAG="${2:-kernels/configs/rk3588_mainline_min.hdmi.fragment}"
 
 cd "$KDIR"
 make ARCH=arm64 defconfig

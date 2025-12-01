@@ -1,6 +1,7 @@
 BOARD ?= opi5b
 BUILD_ROOT ?= $(CURDIR)/build
 IMG ?= puppyos-$(BOARD).img
+BAUDRATE ?= 1500000
 SKIP_KERNEL ?= 0
 SKIP_UBOOT ?= 0
 SKIP_ROOTFS ?= 0
@@ -40,7 +41,7 @@ kernel: script_perms
 
 uboot: script_perms
 	mkdir -p $(BUILD_ROOT)/uboot
-	BUILD_ROOT="$(BUILD_ROOT)/uboot" $(SCRIPTS)/build-uboot.sh $(BOARD)
+	BAUDRATE="$(BAUDRATE)" BUILD_ROOT="$(BUILD_ROOT)/uboot" $(SCRIPTS)/build-uboot.sh $(BOARD)
 
 rootfs: script_perms
 	mkdir -p $(BUILD_ROOT)
@@ -48,7 +49,7 @@ rootfs: script_perms
 
 image: $(IMAGE_DEPS)
 	mkdir -p $(dir $(IMAGE_FILE))
-	$(SCRIPTS)/assemble-image.sh \
+	CONSOLE=ttyS2,$(BAUDRATE)n8 $(SCRIPTS)/assemble-image.sh \
 		--board $(BOARD) \
 		--rootfs $(ROOTFS_DIR) \
 		--uboot $(UBOOT_DEST) \

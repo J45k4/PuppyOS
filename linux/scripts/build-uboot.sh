@@ -9,6 +9,7 @@ UBOOT_DIR="${UBOOT_DIR:-${ROOT_DIR}/uboot}"
 RKBIN_DIR="${RKBIN_DIR:-${ROOT_DIR}/rkbin}"
 # keep build outputs under build/uboot/<board>
 BUILD_ROOT="${BUILD_ROOT:-${ROOT_DIR}/build/uboot}"
+BAUDRATE="${BAUDRATE:-1500000}"
 DEFCONFIG="${DEFCONFIG:-}"
 DEFAULT_ROCKCHIP_TPL="${RKBIN_DIR}/bin/rk35/rk3588_ddr_lp4_2112MHz_lp5_2400MHz_v1.19.bin"
 DEFAULT_BL31="${RKBIN_DIR}/bin/rk35/rk3588_bl31_v1.51.elf"
@@ -72,6 +73,20 @@ if [[ -z "${DEFCONFIG}" ]]; then
 fi
 
 make CROSS_COMPILE=aarch64-linux-gnu- "${DEFCONFIG}"
+
+if ! [[ "${BAUDRATE}" =~ ^[0-9]+$ ]]; then
+	echo "ERROR: BAUDRATE must be a number (got '${BAUDRATE}')" >&2
+	exit 1
+fi
+
+# Force console baudrate in U-Boot so it matches the kernel bootargs.
+if grep -q '^CONFIG_BAUDRATE=' .config; then
+	sed -i -E "s/^CONFIG_BAUDRATE=.*/CONFIG_BAUDRATE=${BAUDRATE}/" .config
+else
+	echo "CONFIG_BAUDRATE=${BAUDRATE}" >> .config
+fi
+make CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+
 make -j"$(nproc)" CROSS_COMPILE=aarch64-linux-gnu-
 
 [[ -s idbloader.img ]] || { echo "ERROR: idbloader.img missing/empty"; exit 1; }

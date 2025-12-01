@@ -37,6 +37,7 @@ The single `Makefile` in this directory now orchestrates the kernel, U-Boot, and
 - `make clean` – nukes `build/`.
 - Skip knobs: set `SKIP_KERNEL=1`, `SKIP_UBOOT=1`, or `SKIP_ROOTFS=1` with `make image` if you already have artifacts staged under `build/` and only want to repack the image.
 - Overlays: `OVERLAYS` defaults to `overlays/`. If `linux/local-overlays/` exists (git-ignored), it is applied automatically after `OVERLAYS` so you can inject private files such as SSH keys without passing extra args.
+- Serial console: set `BAUDRATE=<bps>` (default `1500000`) on `make` and it will apply to both U-Boot (`CONFIG_BAUDRATE`) and the kernel bootargs.
 
 Pass `BOARD`, `BUILD_ROOT`, or `FRAGMENT` if you want to target other RK3588 configurations or custom fragments.
 
@@ -71,6 +72,7 @@ export BL31=/path/to/rkbin/bin/rk35/rk3588_bl31_v1.51.elf
 ```
 
 `build-uboot.sh` keeps `u-boot`/`rkbin` in sync, runs `orangepi-5-plus-rk3588_defconfig`, builds, and copies `idbloader.img`/`u-boot.itb` into `build/uboot/<board>/`. Provide `TEE` if you also need an OP-TEE image.
+Pass `BAUDRATE=<bps>` (defaults to `1500000`) to `make` or `make uboot` if you want `CONFIG_BAUDRATE` (and the matching kernel bootarg) to use a different serial speed.
 
 ## Overlays and First Boot
 

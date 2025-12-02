@@ -41,6 +41,7 @@ The single `Makefile` in this directory now orchestrates the kernel, U-Boot, and
 - Early console: `EARLYCON=1` (default) injects `earlycon=uart8250,mmio32,<addr>` into bootargs; override the address with `EARLYCON_ADDR` (default `0xfeb50000`) or disable entirely with `EARLYCON=0`.
 
 Pass `BOARD`, `BUILD_ROOT`, or `FRAGMENT` if you want to target other RK3588 configurations or custom fragments.
+Pass `KCONFIG=<path>` to `make kernel` if you need to override the merged fragment and supply your own `.config`; `scripts/build-kernel.sh` makes the path absolute *before* entering the kernel tree so a `KCONFIG=./config-6.1.43-rockchip-rk3588` from the repo root “just works” and the file ends up copied into `linux/kernel/.config` before building.
 
 ## Kernel build notes
 

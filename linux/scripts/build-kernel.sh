@@ -9,6 +9,18 @@ KERNEL_DIR="${KERNEL_DIR:-${ROOT_DIR}/kernel}"
 FRAGMENT="${FRAGMENT:-${ROOT_DIR}/kernels/configs/rk3588_mainline_min.headless.fragment}"
 KERNEL_REPO="${KERNEL_REPO:-https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git}"
 BUILD_ROOT="${BUILD_ROOT:-${ROOT_DIR}/build/kernel}"
+die() { echo "ERROR: $*" >&2; exit 1; }
+
+KCONFIG_PATH=""
+if [[ -n "${KCONFIG:-}" ]]; then
+	KCONFIG_PATH="${KCONFIG}"
+	if [[ "${KCONFIG_PATH}" != /* ]]; then
+		KCONFIG_PATH="$(cd "$(dirname "${KCONFIG_PATH}")" && pwd)/$(basename "${KCONFIG_PATH}")"
+	fi
+	if [[ ! -f "${KCONFIG_PATH}" ]]; then
+		die "KCONFIG file not found: ${KCONFIG}"
+	fi
+fi
 
 ensure_repo() {
 	local dir="$1"
@@ -29,7 +41,12 @@ ensure_repo "${KERNEL_DIR}" "${KERNEL_REPO}"
 
 cd "${KERNEL_DIR}"
 
+if [[ -n "${KCONFIG_PATH:-}" ]]; then
+	cp "${KCONFIG_PATH}" .config
+	echo "Using custom kernel config ${KCONFIG_PATH}"
+else
 	"${SCRIPT_DIR}/mkconfig-mainline.sh" "${KERNEL_DIR}" "${FRAGMENT}"
+fi
 
 	# Build non-interactively; feed defaults if Kconfig unexpectedly prompts.
 	(

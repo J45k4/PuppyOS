@@ -28,7 +28,7 @@ ROOTFS_TAR="${ROOTFS_TAR:-}"
 DISK_IMG="${DISK_IMG:-}"
 
 # Kernel console
-CONSOLE="${CONSOLE:-ttyS2,1500000}"   # Orange Pi 5 typical
+CONSOLE="${CONSOLE:-ttyS2,115200}"   # Orange Pi 5 typical
 
 # Boot partition size
 BOOT_SIZE="${BOOT_SIZE:-200MiB}"

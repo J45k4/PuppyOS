@@ -9,7 +9,7 @@ UBOOT_DIR="${UBOOT_DIR:-${ROOT_DIR}/uboot}"
 RKBIN_DIR="${RKBIN_DIR:-${ROOT_DIR}/rkbin}"
 # keep build outputs under build/uboot/<board>
 BUILD_ROOT="${BUILD_ROOT:-${ROOT_DIR}/build/uboot}"
-BAUDRATE="${BAUDRATE:-1500000}"
+BAUDRATE="${BAUDRATE:-115200}"
 DEFCONFIG="${DEFCONFIG:-}"
 DEFAULT_ROCKCHIP_TPL="${RKBIN_DIR}/bin/rk35/rk3588_ddr_lp4_2112MHz_lp5_2400MHz_v1.19.bin"
 DEFAULT_BL31="${RKBIN_DIR}/bin/rk35/rk3588_bl31_v1.51.elf"

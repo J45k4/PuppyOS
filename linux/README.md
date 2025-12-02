@@ -37,7 +37,7 @@ The single `Makefile` in this directory now orchestrates the kernel, U-Boot, and
 - `make clean` – nukes `build/`.
 - Skip knobs: set `SKIP_KERNEL=1`, `SKIP_UBOOT=1`, or `SKIP_ROOTFS=1` with `make image` if you already have artifacts staged under `build/` and only want to repack the image.
 - Overlays: `OVERLAYS` defaults to `overlays/`. If `linux/local-overlays/` exists (git-ignored), it is applied automatically after `OVERLAYS` so you can inject private files such as SSH keys without passing extra args.
-- Serial console: set `BAUDRATE=<bps>` (default `1500000`) on `make` and it will apply to both U-Boot (`CONFIG_BAUDRATE`) and the kernel bootargs.
+- Serial console: set `BAUDRATE=<bps>` (default `115200`) on `make` and it will apply to both U-Boot (`CONFIG_BAUDRATE`) and the kernel bootargs; to open the board console from your workstation run `sudo picocom -b 115200 /dev/ttyUSB0` (or adjust the baud and device name to match your adapter) once the system starts booting.
 - Early console: `EARLYCON=1` (default) injects `earlycon=uart8250,mmio32,<addr>` into bootargs; override the address with `EARLYCON_ADDR` (default `0xfeb50000`) or disable entirely with `EARLYCON=0`.
 
 Pass `BOARD`, `BUILD_ROOT`, or `FRAGMENT` if you want to target other RK3588 configurations or custom fragments.
@@ -57,6 +57,10 @@ sudo make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=/path/to/
 
 `scripts/mkconfig-mainline.sh` now defaults to `rk3588_mainline_min.hdmi.fragment` so the build enables the Rockchip HDMI/VOP stack; pass `FRAGMENT=linux/kernels/configs/rk3588_mainline_min.headless.fragment` if you need the smaller headless set. The helper script keeps the merge interactive-free, and `scripts/build-kernel.sh` clones https://git.kernel.org/.../stable/linux.git into `linux/kernel/` if it is missing, keeps it synced, runs the helper, and copies `Image` plus RK3588 DTBs into `build/kernel/<board>/`.
 
+### Fragment overrides
+
+`scripts/mkconfig-mainline.sh` merges the requested fragment on top of `make ARCH=arm64 defconfig` and immediately runs `make olddefconfig` so all other symbols stay at their defaults. Only the `CONFIG_*` lines in the fragment actually move away from the defconfig, so the existing HDMI/headless fragments in `linux/kernels/configs/` contain just the overrides the repo cares about. To force additional flags, drop a new fragment (for example `linux/kernels/configs/my-special.fragment`) with the minimal `CONFIG_FOO=y`/`CONFIG_BAR=m` lines you need and build with `FRAGMENT=linux/kernels/configs/my-special.fragment make image`; the merge will respect your overrides while leaving everything else untouched.
+
 ## U-Boot notes
 
 U-Boot is fetched under `uboot/`. Install the native dependencies before you build:
@@ -73,7 +77,7 @@ export BL31=/path/to/rkbin/bin/rk35/rk3588_bl31_v1.51.elf
 ```
 
 `build-uboot.sh` keeps `u-boot`/`rkbin` in sync, runs `orangepi-5-plus-rk3588_defconfig`, builds, and copies `idbloader.img`/`u-boot.itb` into `build/uboot/<board>/`. Provide `TEE` if you also need an OP-TEE image.
-Pass `BAUDRATE=<bps>` (defaults to `1500000`) to `make` or `make uboot` if you want `CONFIG_BAUDRATE` (and the matching kernel bootarg) to use a different serial speed.
+Pass `BAUDRATE=<bps>` (defaults to `115200`) to `make` or `make uboot` if you want `CONFIG_BAUDRATE` (and the matching kernel bootarg) to use a different serial speed.
 
 ## Overlays and First Boot
 

@@ -1,6 +1,6 @@
 name: orangepi-5b
 soc: rk3588
-console: "ttyS2,1500000n8"
+console: "ttyS2,115200n8"
 partitions:
   boot_mb: 256
   root_mb: 4096

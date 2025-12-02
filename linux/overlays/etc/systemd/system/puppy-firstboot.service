@@ -1,0 +1,13 @@
+[Unit]
+Description=PuppyOS first-boot setup
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/usr/local/bin/puppy-firstboot
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/puppy-firstboot
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target

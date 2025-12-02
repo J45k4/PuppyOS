@@ -1,0 +1,7 @@
+images/
+work/
+build/
+kernel/
+uboot/
+rkbin/
+local-overlays/

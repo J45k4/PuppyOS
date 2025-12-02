@@ -6,10 +6,13 @@ ROOTFS=""
 UBOOT_DIR=""
 KERNEL_DIR=""
 BOARD=""
+BAUDRATE="${BAUDRATE:-1500000}"
+EARLYCON="${EARLYCON:-1}"
+EARLYCON_ADDR="${EARLYCON_ADDR:-0xfeb50000}"
 
 # Ensure we have the privileges needed for loop/mount/mkfs; re-exec with sudo if not.
 if [[ $EUID -ne 0 ]]; then
-  exec sudo CONSOLE="${CONSOLE:-}" BOOTARGS_EXTRA="${BOOTARGS_EXTRA:-}" "$0" "$@"
+  exec sudo CONSOLE="${CONSOLE:-}" BOOTARGS_EXTRA="${BOOTARGS_EXTRA:-}" BAUDRATE="${BAUDRATE:-}" EARLYCON="${EARLYCON:-}" EARLYCON_ADDR="${EARLYCON_ADDR:-}" "$0" "$@"
 fi
 
 while [[ $# -gt 0 ]]; do
@@ -54,6 +57,11 @@ install -Dm0644 "$KERNEL_DIR/"*.dtb /mnt/puppy-boot/
 
 # simple extlinux (works with mainline u-boot)
 mkdir -p /mnt/puppy-boot/extlinux
+CONSOLE_DEFAULT="ttyS2,${BAUDRATE}n8"
+EARLYCON_ARG=""
+if [[ "${EARLYCON}" != "0" && -n "${EARLYCON}" ]]; then
+	EARLYCON_ARG="earlycon=uart8250,mmio32,${EARLYCON_ADDR}"
+fi
 cat >/mnt/puppy-boot/extlinux/extlinux.conf <<EOF_INNER
 timeout 1
 default linux
@@ -62,7 +70,7 @@ menu title PuppyOS
 label linux
   kernel /Image
   fdtdir /
-  append console=${CONSOLE:-ttyS2,1500000n8} root=/dev/mmcblk0p2 rw rootwait ${BOOTARGS_EXTRA}
+  append console=${CONSOLE:-${CONSOLE_DEFAULT}} root=/dev/mmcblk0p2 rw rootwait ${EARLYCON_ARG} ${BOOTARGS_EXTRA}
 EOF_INNER
 
 sync

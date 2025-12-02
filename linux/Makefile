@@ -2,6 +2,8 @@ BOARD ?= opi5b
 BUILD_ROOT ?= $(CURDIR)/build
 IMG ?= puppyos-$(BOARD).img
 BAUDRATE ?= 1500000
+EARLYCON ?= 1
+EARLYCON_ADDR ?= 0xfeb50000
 SKIP_KERNEL ?= 0
 SKIP_UBOOT ?= 0
 SKIP_ROOTFS ?= 0
@@ -49,7 +51,7 @@ rootfs: script_perms
 
 image: $(IMAGE_DEPS)
 	mkdir -p $(dir $(IMAGE_FILE))
-	CONSOLE=ttyS2,$(BAUDRATE)n8 $(SCRIPTS)/assemble-image.sh \
+	EARLYCON="$(EARLYCON)" EARLYCON_ADDR="$(EARLYCON_ADDR)" CONSOLE=ttyS2,$(BAUDRATE)n8 $(SCRIPTS)/assemble-image.sh \
 		--board $(BOARD) \
 		--rootfs $(ROOTFS_DIR) \
 		--uboot $(UBOOT_DEST) \

@@ -38,6 +38,7 @@ The single `Makefile` in this directory now orchestrates the kernel, U-Boot, and
 - Skip knobs: set `SKIP_KERNEL=1`, `SKIP_UBOOT=1`, or `SKIP_ROOTFS=1` with `make image` if you already have artifacts staged under `build/` and only want to repack the image.
 - Overlays: `OVERLAYS` defaults to `overlays/`. If `linux/local-overlays/` exists (git-ignored), it is applied automatically after `OVERLAYS` so you can inject private files such as SSH keys without passing extra args.
 - Serial console: set `BAUDRATE=<bps>` (default `1500000`) on `make` and it will apply to both U-Boot (`CONFIG_BAUDRATE`) and the kernel bootargs.
+- Early console: `EARLYCON=1` (default) injects `earlycon=uart8250,mmio32,<addr>` into bootargs; override the address with `EARLYCON_ADDR` (default `0xfeb50000`) or disable entirely with `EARLYCON=0`.
 
 Pass `BOARD`, `BUILD_ROOT`, or `FRAGMENT` if you want to target other RK3588 configurations or custom fragments.
 

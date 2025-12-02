@@ -104,6 +104,17 @@ verify_write() {
   echo ">> Verification passed"
 }
 
+eject_device() {
+  if ! command -v eject >/dev/null; then
+    echo ">> Skipping eject: `eject` not installed"
+    return
+  fi
+  echo ">> Ejecting $DEV"
+  if ! eject "$DEV"; then
+    echo ">> Warning: eject failed for $DEV"
+  fi
+}
+
 main() {
   ensure_root
   ensure_args
@@ -116,6 +127,7 @@ main() {
   unmount_partitions
   write_image
   verify_write
+  eject_device
   echo "Done. SD card should be ready."
 }
 

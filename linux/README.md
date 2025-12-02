@@ -90,6 +90,6 @@ make -C linux BOARD=opi5b
 - `scripts/make-opi-sd.sh /dev/sdX` – writes the SD card directly using the kernel, DTB, rootfs, and U-Boot artifacts produced under `build/`. It expects Rockchip `idbloader.img` + `u-boot.itb` when `SOC=rockchip`.
 - `make flash` – wraps `rkdeveloptool` for USB flashing (`scripts/flash-rk.sh`).
 
-- `scripts/write-image.sh <image> <device>` – safety wrapper around `dd` that validates the image (size plus partition table), confirms the target is removable/not the host disk, runs a read-back comparison after `dd`, and prompts before writing so you can flash `build/images/puppyos-<board>.img` confidently.
+- `scripts/write-image.sh <image> <device>` – safety wrapper around `dd` that validates the image (size plus partition table), confirms the target is removable/not the host disk, runs a read-back comparison after `dd`, prompts before writing, and ejects the device when possible so you can flash `build/images/puppyos-<board>.img` confidently.
 
 Ensure the target device is unmounted before running the SD card script. All boot assets are pulled from `build/`; rerun `make` if you change kernel/U-Boot/rootfs inputs.

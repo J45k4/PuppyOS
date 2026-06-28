@@ -1,0 +1,16 @@
+[package]
+name = "compositor-wayland"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1"
+compositor-core = { path = "../core" }
+glow = "0.13"
+glutin = "0.31"
+glutin-winit = "0.4"
+libc = "0.2"
+raw-window-handle = "0.5"
+wayland-server = "0.31"
+wayland-protocols = { version = "0.31", features = ["server", "unstable"] }
+winit = "0.29"

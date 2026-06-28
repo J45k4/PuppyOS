@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "core",
+    "desktop",
+    "wayland",
+]
+resolver = "2"

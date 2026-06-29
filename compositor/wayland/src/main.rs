@@ -1,5 +1,7 @@
 #[path = "../../desktop/src/renderer.rs"]
 mod renderer;
+#[cfg(feature = "smithay-backend")]
+mod smithay_backend;
 
 use std::io::Write;
 use std::{
@@ -42,7 +44,7 @@ use wayland_protocols::xdg::decoration::zv1::server::{
     zxdg_decoration_manager_v1, zxdg_toplevel_decoration_v1,
 };
 use wayland_protocols::xdg::shell::server::{
-    xdg_positioner, xdg_surface, xdg_toplevel, xdg_wm_base,
+    xdg_popup, xdg_positioner, xdg_surface, xdg_toplevel, xdg_wm_base,
 };
 use wayland_server::{
     BindError, Client, DataInit, Dispatch, Display, DisplayHandle, GlobalDispatch, ListeningSocket,
@@ -66,6 +68,11 @@ static TERMINATION_REQUESTED: AtomicBool = AtomicBool::new(false);
 fn main() -> Result<()> {
     install_termination_signal_handlers()
         .context("failed to install termination signal handlers")?;
+
+    #[cfg(feature = "smithay-backend")]
+    if std::env::args().any(|arg| arg == "--smithay") {
+        return smithay_backend::run();
+    }
 
     if std::env::args().any(|arg| arg == "--headless") {
         let mut wayland = NestedWaylandServer::new(false)?;
@@ -501,8 +508,9 @@ impl NestedWaylandServer {
         &mut self.state.compositor
     }
 
-    fn set_desktop_size(&mut self, size: Size) {
+    fn set_desktop_size(&mut self, size: Size) -> bool {
         self.state.desktop_size = size;
+        self.state.compositor.resize_full_size_windows(size)
     }
 
     fn launch_app(&mut self, launch: LauncherLaunch) {
@@ -510,6 +518,7 @@ impl NestedWaylandServer {
             LauncherLaunch::Window(_) => {}
             LauncherLaunch::External(ExternalApp::Telegram) => self.launch_telegram(),
             LauncherLaunch::External(ExternalApp::Chrome) => self.launch_chrome(),
+            LauncherLaunch::External(ExternalApp::Brave) => self.launch_brave(),
         }
     }
 
@@ -608,6 +617,73 @@ impl NestedWaylandServer {
             }
             Err(err) => {
                 eprintln!("failed to launch Chrome: {err}");
+            }
+        }
+    }
+
+    fn launch_brave(&mut self) {
+        let user_data_dir = "/tmp/brave-puppyos-nested";
+        if let Err(err) = reset_chrome_profile(user_data_dir) {
+            eprintln!("failed to create Brave profile dir {user_data_dir}: {err}");
+            return;
+        }
+
+        let mut command = if let Some(brave_binary) = find_first_existing_binary(&[
+            "brave-browser",
+            "brave",
+            "/opt/brave.com/brave/brave-browser",
+        ]) {
+            let mut command = Command::new(brave_binary);
+            command
+                .env("WAYLAND_DISPLAY", &self.socket_name)
+                .env("XDG_SESSION_TYPE", "wayland");
+            command
+        } else {
+            let mut command = Command::new("flatpak");
+            command
+                .args(["run", "--socket=wayland", "--filesystem=/tmp"])
+                .arg(format!("--env=WAYLAND_DISPLAY={}", self.socket_name))
+                .arg("--env=XDG_SESSION_TYPE=wayland")
+                .arg("com.brave.Browser")
+                .env("WAYLAND_DISPLAY", &self.socket_name)
+                .env("XDG_SESSION_TYPE", "wayland");
+            command
+        };
+        put_child_in_own_process_group(&mut command);
+        remove_injected_library_env(&mut command);
+        command.args([
+            "--enable-features=UseOzonePlatform",
+            "--ozone-platform=wayland",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--disable-accelerated-video-decode",
+            "--disable-gpu-memory-buffer-video-frames",
+            "--disable-zero-copy",
+        ]);
+        if self.dmabuf_enabled() {
+            command.args(["--disable-vulkan", "--disable-features=Vulkan"]);
+        } else {
+            command.arg("--disable-gpu");
+        }
+        command
+            .arg(format!("--user-data-dir={user_data_dir}"))
+            .arg("about:blank");
+
+        match command.spawn() {
+            Ok(child) => {
+                let pid = child.id();
+                eprintln!(
+                    "launched Brave in PuppyOS compositor on WAYLAND_DISPLAY={} pid={}",
+                    self.socket_name, pid
+                );
+                self.launched_apps.push(LaunchedAppProcess::new(
+                    "Brave",
+                    child,
+                    process_group_from_pid(pid),
+                ));
+            }
+            Err(err) => {
+                eprintln!("failed to launch Brave: {err}");
             }
         }
     }
@@ -1124,6 +1200,36 @@ fn reset_chrome_profile(path: &str) -> std::io::Result<()> {
     fs::create_dir_all(path)
 }
 
+fn find_first_existing_binary(candidates: &[&str]) -> Option<String> {
+    for candidate in candidates {
+        let path = Path::new(candidate);
+        if candidate.contains('/') {
+            if is_executable_file(path) {
+                return Some((*candidate).to_string());
+            }
+            continue;
+        }
+
+        let Some(paths) = std::env::var_os("PATH") else {
+            continue;
+        };
+        for directory in std::env::split_paths(&paths) {
+            let binary = directory.join(candidate);
+            if is_executable_file(&binary) {
+                return Some(binary.to_string_lossy().into_owned());
+            }
+        }
+    }
+
+    None
+}
+
+fn is_executable_file(path: &Path) -> bool {
+    path.metadata()
+        .map(|metadata| metadata.is_file() && metadata.permissions().mode() & 0o111 != 0)
+        .unwrap_or(false)
+}
+
 fn remove_injected_library_env(command: &mut Command) {
     for key in [
         "LD_LIBRARY_PATH",
@@ -1427,6 +1533,12 @@ struct XdgSurfaceData {
 
 #[derive(Debug, Clone)]
 struct XdgToplevelData {
+    surface: xdg_surface::XdgSurface,
+    surface_id: u32,
+}
+
+#[derive(Debug, Clone)]
+struct XdgPopupData {
     surface: xdg_surface::XdgSurface,
     surface_id: u32,
 }
@@ -2466,13 +2578,23 @@ impl Dispatch<xdg_surface::XdgSurface, XdgSurfaceData> for NestedState {
                 }
                 _state.configure_surface_id(data.surface_id, Size::new(640.0, 420.0));
             }
-            xdg_surface::Request::GetPopup { .. } => {
+            xdg_surface::Request::GetPopup { id, .. } => {
+                let popup = data_init.init(
+                    id,
+                    XdgPopupData {
+                        surface: resource.clone(),
+                        surface_id: data.surface_id,
+                    },
+                );
                 if trace_wayland() {
                     eprintln!(
                         "Wayland xdg popup requested for wl_surface={}",
                         data.surface_id
                     );
                 }
+                let serial = _state.next_serial();
+                popup.configure(0, 0, 320, 240);
+                resource.configure(serial);
             }
             xdg_surface::Request::SetWindowGeometry { .. } => {}
             xdg_surface::Request::AckConfigure { serial } => {
@@ -2643,6 +2765,36 @@ impl Dispatch<xdg_toplevel::XdgToplevel, XdgToplevelData> for NestedState {
         data: &XdgToplevelData,
     ) {
         state.remove_surface_window(data.surface_id);
+    }
+}
+
+impl Dispatch<xdg_popup::XdgPopup, XdgPopupData> for NestedState {
+    fn request(
+        _state: &mut Self,
+        _client: &Client,
+        resource: &xdg_popup::XdgPopup,
+        request: xdg_popup::Request,
+        data: &XdgPopupData,
+        _dhandle: &DisplayHandle,
+        _data_init: &mut DataInit<'_, Self>,
+    ) {
+        match request {
+            xdg_popup::Request::Destroy => {}
+            xdg_popup::Request::Grab { .. } => {
+                if trace_wayland() {
+                    eprintln!(
+                        "Wayland xdg popup grab requested for wl_surface={}",
+                        data.surface_id
+                    );
+                }
+            }
+            xdg_popup::Request::Reposition { .. } => {
+                let serial = _state.next_serial();
+                resource.configure(0, 0, 320, 240);
+                data.surface.configure(serial);
+            }
+            _ => {}
+        }
     }
 }
 

@@ -377,6 +377,20 @@ impl DesktopCompositor {
         true
     }
 
+    pub fn resize_full_size_windows(&mut self, desktop_size: Size) -> bool {
+        let bounds = Self::work_area(desktop_size);
+        let mut changed = false;
+
+        for window in &mut self.windows {
+            if window.restore_bounds.is_some() && window.bounds != bounds {
+                window.bounds = bounds;
+                changed = true;
+            }
+        }
+
+        changed
+    }
+
     pub fn set_window_minimized(&mut self, id: WindowId, minimized: bool) -> bool {
         let Some(index) = self.windows.iter().position(|window| window.id == id) else {
             return false;
@@ -854,7 +868,7 @@ impl AppDefinition {
     }
 }
 
-const APP_CATALOG: [AppDefinition; 10] = [
+const APP_CATALOG: [AppDefinition; 11] = [
     AppDefinition::internal(
         "Terminal",
         Color::rgb(0.96, 0.97, 0.98),
@@ -905,6 +919,7 @@ const APP_CATALOG: [AppDefinition; 10] = [
     ),
     AppDefinition::external("Telegram", ExternalApp::Telegram),
     AppDefinition::external("Chrome", ExternalApp::Chrome),
+    AppDefinition::external("Brave", ExternalApp::Brave),
 ];
 
 fn matching_apps(query: &str) -> Vec<AppDefinition> {
@@ -926,6 +941,7 @@ pub enum LauncherLaunch {
 pub enum ExternalApp {
     Telegram,
     Chrome,
+    Brave,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -1558,6 +1574,28 @@ mod tests {
     }
 
     #[test]
+    fn full_size_windows_resize_with_desktop() {
+        let mut compositor = DesktopCompositor::sample();
+        let id = compositor.windows()[1].id;
+
+        assert!(compositor.set_window_full_size(id, Size::new(900.0, 700.0), true));
+        assert!(compositor.resize_full_size_windows(Size::new(1200.0, 800.0)));
+        assert_eq!(
+            compositor.windows().last().unwrap().bounds,
+            Rect::from_xywh(0.0, DesktopCompositor::TOOLBAR_HEIGHT, 1200.0, 712.0)
+        );
+    }
+
+    #[test]
+    fn normal_windows_do_not_resize_with_desktop() {
+        let mut compositor = DesktopCompositor::sample();
+        let initial = compositor.windows()[1].bounds;
+
+        assert!(!compositor.resize_full_size_windows(Size::new(1200.0, 800.0)));
+        assert_eq!(compositor.windows()[1].bounds, initial);
+    }
+
+    #[test]
     fn full_size_toggle_ignores_body_and_resize_border() {
         let mut compositor = DesktopCompositor::sample();
         let initial = compositor.windows()[1].bounds;
@@ -1745,6 +1783,19 @@ mod tests {
             launched,
             Some(LauncherLaunch::External(ExternalApp::Chrome))
         );
+        assert!(!compositor.launcher_is_open());
+        assert_eq!(compositor.windows().len(), 2);
+    }
+
+    #[test]
+    fn launcher_can_request_brave_launch() {
+        let mut compositor = DesktopCompositor::sample();
+        compositor.toggle_launcher();
+        compositor.launcher_insert_text("brave");
+
+        let launched = compositor.launcher_launch_selected();
+
+        assert_eq!(launched, Some(LauncherLaunch::External(ExternalApp::Brave)));
         assert!(!compositor.launcher_is_open());
         assert_eq!(compositor.windows().len(), 2);
     }
